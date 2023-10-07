@@ -1,0 +1,1 @@
+Replace the .lib/.h/.ipp placeholders with the real ones from the Release folder
