@@ -28,8 +28,6 @@
 
 # Executables
 *.exe
-*.out
-*.app
 *.vsidx
 *.lock
 *.db
@@ -41,11 +39,9 @@
 *.vcxproj
 *.filters
 *.user
-*.idb
 *.recipe
 *.log
 *.pdb
-*.lastbuildstate
 *.tlog
-*.txt
-.vs/CallistoCore/v17/.suo
+*.json
+*.sqlite
