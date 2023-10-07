@@ -45,3 +45,17 @@
 *.tlog
 *.json
 *.sqlite
+out/build/x64-debug/.vs/CallistoCore/v17/.suo
+out/build/x64-debug/cmake_install.cmake
+out/build/x64-debug/CMakeCache.txt
+*.cmake
+*.bin
+*.c
+out/build/x64-debug/CMakeFiles/3.25.1-msvc1/CompilerIdCXX/CMakeCXXCompilerId.cpp
+out/build/x64-debug/CMakeFiles/3.25.1-msvc1/VCTargetsPath.txt
+*.rule
+*.check_cache
+*.stamp
+*.depend
+*.list
+out/build/x64-debug/CMakeFiles/TargetDirectories.txt
