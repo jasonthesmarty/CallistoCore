@@ -59,3 +59,8 @@ out/build/x64-debug/CMakeFiles/3.25.1-msvc1/VCTargetsPath.txt
 *.depend
 *.list
 out/build/x64-debug/CMakeFiles/TargetDirectories.txt
+out/build/x64-debug/CMakeFiles/rules.ninja
+out/build/x64-debug/CMakeFiles/ShowIncludes/foo.h
+.vs/CallistoCore/v17/.wsuo
+.vs/CMake Overview
+*.bat
