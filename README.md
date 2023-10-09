@@ -13,10 +13,11 @@ There is only support for **Windows**.
 - With commands run the **build.ninja** file in the **out** folder.
 	- It doesn't matter which folder you use, I just use the debug version since it will build the same MSVC solution:
 	- **Commands** (in a .bat file):
-	- *cd out\build\x64-debug
-		del CMakeCache.txt
-		ninja
-		PAUSE*
+	- ```
+      cd out\build\x64-debug
+      del CMakeCache.txt
+      ninja
+      PAUSE
 - The MSVC solution will then get created and then the **.lib** files can be compiled into x64 debug and release modes.
 - And also the CMake file does not link the libraries required, only the include files.
 - If this is not done, then these libraries would have to be linked in your project.
