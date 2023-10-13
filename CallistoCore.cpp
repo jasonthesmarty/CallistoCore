@@ -5,7 +5,7 @@
 
 //<<----- Structs ------>//
 
-struct PhysicalDeviceQueueFamilies {
+struct p_CC_VK_PhysicalDeviceQueueFamilies {
 	std::optional<CCuint32> graphicsFamily;
 	std::optional<CCuint32> computeFamily;
 	std::optional<CCuint32> transferFamily;
@@ -17,7 +17,7 @@ struct PhysicalDeviceQueueFamilies {
  	}
 };
 
-struct SwapchainDetails {
+struct p_CC_VK_SwapchainDetails {
 	VkSurfaceCapabilitiesKHR capabilities;
 	std::vector<VkSurfaceFormatKHR> formats;
 	std::vector<VkPresentModeKHR> presentModes;
@@ -26,6 +26,8 @@ struct SwapchainDetails {
 //<<----- Structs ------>//
 
 //<<----- Internal Functions ------>//
+
+//<<----- Vulkan - Internal ------>//
 
 CCboolean p_CC_VK_isValidationLayerSupported(const std::vector<CCwords>& validationLayers) {
 	CCuint32 layerCount;
@@ -59,7 +61,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL p_CC_VK_debugCallback(VkDebugUtilsMessageSeverity
 }
 
 
-void p_CC_VK_device_family_checker(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, PhysicalDeviceQueueFamilies* physicalDeviceQueueFamilies) {
+void p_CC_VK_device_family_checker(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, p_CC_VK_PhysicalDeviceQueueFamilies* physicalDeviceQueueFamilies) {
 	CCuint32 queueFamiliesCount = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamiliesCount, nullptr);
 
@@ -104,7 +106,7 @@ CCboolean p_CC_VK_are_device_extensions_supported(VkPhysicalDevice physicalDevic
 	return requiredExtensions.empty();
 }
 
-void p_CC_VK_get_swapchain_details(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, SwapchainDetails* details) {
+void p_CC_VK_get_swapchain_details(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, p_CC_VK_SwapchainDetails* details) {
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &details->capabilities);
 
 	CCuint32 formatsCount = 0;
@@ -123,7 +125,7 @@ void p_CC_VK_get_swapchain_details(VkPhysicalDevice physicalDevice, VkSurfaceKHR
 }
 
 CCboolean p_CC_VK_does_device_have_required_families(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, const std::vector<CCwords>& deviceExtensions) {
-	PhysicalDeviceQueueFamilies physicalDeviceQueueFamilies;
+	p_CC_VK_PhysicalDeviceQueueFamilies physicalDeviceQueueFamilies;
 	p_CC_VK_device_family_checker(physicalDevice, surface, &physicalDeviceQueueFamilies);
 
 	CCboolean deviceExtensionsSupported = p_CC_VK_are_device_extensions_supported(physicalDevice, deviceExtensions);
@@ -131,7 +133,7 @@ CCboolean p_CC_VK_does_device_have_required_families(VkPhysicalDevice physicalDe
 	CCboolean swapchainAdequate = false;
 
 	if (deviceExtensionsSupported) {
-		SwapchainDetails swapchainSupport;
+		p_CC_VK_SwapchainDetails swapchainSupport;
 		p_CC_VK_get_swapchain_details(physicalDevice, surface, &swapchainSupport);
 		swapchainAdequate = !swapchainSupport.formats.empty() && !swapchainSupport.presentModes.empty();
 	}
@@ -190,9 +192,21 @@ CCuint32 p_CC_VK_find_mem_type_index(VkPhysicalDevice* physicalDevice, CCuint32 
 	return UINT32_MAX;
 }
 
+//<<----- Vulkan - Internal ------>//
+
 //<<----- Internal Functions ------>//
 
 //<<----- Public Functions ------>//
+
+//<<----- Util Functions ------>//
+
+void CC_get_version() {
+	std::cout << "Callisto Core Version: " << MAJOR_VERSION << "." << MINOR_VERSION << "." << PATCH_VERSION << '\n';
+}
+
+//<<----- Util Functions ------>//
+
+//<<----- GLFW ------>//
 
 CALLISTO_CORE_RESULT CC_init_glfw() {
 	if (glfwInit()) {
@@ -316,6 +330,162 @@ void CC_terminate_glfw() {
 	glfwTerminate();
 }
 
+//<<----- GLFW ------>//
+
+//<<----- FMOD ------>//
+
+#include <FMOD/fmod_errors.h>
+
+CALLISTO_CORE_RESULT CC_FMD_create_sound_system(FMOD::System** system) {
+	if (FMOD::System_Create(system) == FMOD_OK)
+		return CC_FMD_SOUND_SYSTEM_CREATION_SUCCESS;
+	else
+		return CC_FMD_SOUND_SYSTEM_CREATION_FAILURE;
+}
+
+CALLISTO_CORE_RESULT CC_FMD_init_sound_system(FMOD::System* system, CCint maxChannels, FMOD_INITFLAGS flags) {
+	if (system->init(maxChannels, flags, nullptr) == FMOD_OK)
+		return CC_FMD_SOUND_SYSTEM_INITIALIZATION_SUCCESS;
+	else
+		return CC_FMD_SOUND_SYSTEM_INITIALIZATION_FAILURE;
+}
+
+CALLISTO_CORE_RESULT CC_FMD_create_sound(FMOD::System* system, FMOD::Sound** sound, CCwords soundFile, FMOD_MODE mode) {
+	if (system->createSound(soundFile, mode, 0, sound) == FMOD_OK)
+		return CC_FMD_SOUND_CREATION_SUCCESS;
+	else
+		return CC_FMD_SOUND_CREATION_FAILURE;
+}
+
+void CC_FMD_set_position(FMOD::Channel* channel, const FMOD_VECTOR* position, const FMOD_VECTOR* listenerOrientation) {
+	channel->set3DAttributes(position, listenerOrientation);
+}
+
+void CC_FMD_get_position(FMOD::Channel* channel, FMOD_VECTOR* position, FMOD_VECTOR* listenerOrientation) {
+	channel->get3DAttributes(position, listenerOrientation);
+}
+
+void CC_FMD_set_pan(FMOD::Channel* channel, CCfloat pan) {
+	assert((pan <= 100.0f) && (pan >= -100.0f));
+	CCfloat normalizedPan = pan / 100.0f;
+	channel->setPan(normalizedPan);
+}
+
+void CC_FMD_set_pitch(FMOD::Channel* channel, CCfloat pitch) {
+	assert((pitch <= 100.0f) && (pitch >= 0.0f));
+	CCfloat normalizedPit = pitch / 100.0f;
+	channel->setPitch(normalizedPit);
+}
+
+void CC_FMD_get_pitch(FMOD::Channel* channel, CCfloat* pitch) {
+	CCfloat normalizedPit = 0;
+	channel->getPitch(&normalizedPit);
+	*pitch = normalizedPit * 100.0f;
+}
+
+void CC_FMD_set_volume(FMOD::Channel* channel, CCfloat volume) {
+	assert((volume <= 100.0f) && (volume >= 0.0f));
+	CCfloat normalizedVol = volume / 100.0f;
+	channel->setVolume(normalizedVol);
+}
+
+void CC_FMD_get_volume(FMOD::Channel* channel, CCfloat* volume) {
+	CCfloat normalizedVol = 0;
+	channel->getVolume(&normalizedVol);
+	*volume = normalizedVol * 100.0f;
+}
+
+void CC_FMD_set_priority(FMOD::Channel* channel, CCint priority) {
+	channel->setPriority(priority);
+}
+
+void CC_FMD_get_prioirty(FMOD::Channel* channel, CCint* priority) {
+	channel->getPriority(priority);
+}
+
+void CC_FMD_set_paused(FMOD::Channel* channel, CCboolean paused) {
+	channel->setPaused(paused);
+}
+
+void CC_FMD_get_paused(FMOD::Channel* channel, CCboolean* paused) {
+	channel->getPaused(paused);
+}
+
+void CC_FMD_set_mute(FMOD::Channel* channel, CCboolean mute) {
+	channel->setMute(mute);
+}
+
+void CC_FMD_get_mute(FMOD::Channel* channel, CCboolean* mute) {
+	channel->getMute(mute);
+}
+
+void CC_FMD_set_mode(FMOD::Channel* channel, FMOD_MODE mode) {
+	channel->setMode(mode);
+}
+
+void CC_FMD_get_mode(FMOD::Channel* channel, FMOD_MODE* mode) {
+	channel->getMode(mode);
+}
+
+void CC_FMD_set_timestamp(FMOD::Channel* channel, CCuint32 time, FMOD_TIMEUNIT timeMeasurement) {
+	channel->setPosition(time, timeMeasurement);
+}
+
+void CC_FMD_get_timestamp(FMOD::Channel* channel, CCuint32* time, FMOD_TIMEUNIT timeMeasurement) {
+	channel->getPosition(time, timeMeasurement);
+}
+
+void CC_FMD_play_sound(FMOD::System* system, FMOD::Sound* sound, FMOD::ChannelGroup* channelGroup, FMOD::Channel** channel, CCboolean paused) {
+	system->playSound(sound, channelGroup, paused, channel);
+}
+
+void CC_FMD_destroy_sound(FMOD::Sound* sound) {
+	sound->release();
+}
+
+void CC_FMD_destroy_sound_system(FMOD::System* system) {
+	system->close();
+	system->release();
+}
+
+//<<----- FMOD ------>//
+
+//<<----- FreeType ----->//
+
+CALLISTO_CORE_RESULT CC_FT_init(FT_Library* ft) {
+	if (FT_Init_FreeType(ft) == FT_Err_Ok)
+		return CC_FT_INITIALIZED_SUCCESSFULLY;
+	else
+		return CC_FT_INITIALIZED_UNSUCCESSFULLY;
+}
+
+CALLISTO_CORE_RESULT CC_FT_create_face(FT_Library* ft, FT_Face* face, CCwords fontFile) {
+	if (FT_New_Face(*ft, fontFile, 0, face) == FT_Err_Ok)
+		return CC_FT_FACE_CREATION_SUCCESS;
+	else
+		return CT_FT_FACE_CREATION_FAILED;
+}
+
+void CC_FT_set_pixel_size(FT_Face* face, CCuint32 fontWidthPX, CCuint32 fontHeightPX) {
+	FT_Set_Pixel_Sizes(*face, fontWidthPX, fontHeightPX);
+}
+
+void CC_FT_load_char(FT_Face* face, CCulong charCode, CCint flags) {
+	FT_Load_Char(*face, charCode, flags);
+}
+
+void CC_FT_destroy_face(FT_Face* face) {
+	FT_Done_Face(*face);
+}
+
+void CC_FT_un_init(FT_Library* ft) {
+	FT_Done_FreeType(*ft);
+}
+
+//<<----- FreeType ----->//
+
+//<<----- Vulkan ------>//
+
 void CC_VK_create_app_info(VkApplicationInfo* appInfo, CCwords appName, CCwords engineName, std::array<CCint, 3> appVersion, std::array<CCint, 3> engineVersion, CCuint32 vulkanApiVersion) {
 	appInfo->sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	appInfo->pApplicationName = appName;
@@ -402,7 +572,7 @@ CALLISTO_CORE_RESULT CC_VK_locate_physical_device(VkInstance* instance, VkPhysic
 }
 
 CALLISTO_CORE_RESULT CC_VK_create_logical_device(VkInstance* instance, VkPhysicalDevice* physicalDevice, VkDevice* logicalDevice, VkSurfaceKHR* surface, VkQueue* graphicsQueue, VkQueue* computeQueue, VkQueue* transferQueue, VkQueue* presentQueue, const std::vector<CCwords>& validationLayers, const std::vector<CCwords>& deviceExtensions,CCboolean validationLayerToggle) {
-	PhysicalDeviceQueueFamilies physicalDeviceQueueFamilies;
+	p_CC_VK_PhysicalDeviceQueueFamilies physicalDeviceQueueFamilies;
 	p_CC_VK_device_family_checker(*physicalDevice, *surface, &physicalDeviceQueueFamilies);
 
 	CCfloat graphicsQueuePriority = 1.0f;
@@ -469,7 +639,7 @@ void CC_VK_destroy_surface(VkInstance* instance, VkSurfaceKHR* surface) {
 }
 
 CALLISTO_CORE_RESULT CC_VK_create_swapchain(VkPhysicalDevice* physicalDevice, VkDevice* logicalDevice, VkSurfaceKHR* surface, GLFWwindow** window, VkSwapchainKHR* swapchain, std::vector<VkImage>& swapchainImages, VkFormat* swapchainImageFormat, VkExtent2D* swapchainExtent, VkFormat colorFormat, VkColorSpaceKHR colorSpace, VkPresentModeKHR wantedPresentMode, VkPresentModeKHR defaultPresentMode, VkImageUsageFlagBits imageUsage, VkCompositeAlphaFlagBitsKHR compositeAlpha) {
-	SwapchainDetails swapchainDetails;
+	p_CC_VK_SwapchainDetails swapchainDetails;
 	p_CC_VK_get_swapchain_details(*physicalDevice, *surface, &swapchainDetails);
 
 	VkSurfaceFormatKHR surfaceFormat = p_CC_VK_choose_swapchain_format(swapchainDetails.formats, colorFormat, colorSpace);
@@ -490,7 +660,7 @@ CALLISTO_CORE_RESULT CC_VK_create_swapchain(VkPhysicalDevice* physicalDevice, Vk
 	swapchainCreateInfo.imageArrayLayers = 1;
 	swapchainCreateInfo.imageUsage = imageUsage;
 
-	PhysicalDeviceQueueFamilies deviceQueueFamilies;
+	p_CC_VK_PhysicalDeviceQueueFamilies deviceQueueFamilies;
 	p_CC_VK_device_family_checker(*physicalDevice, *surface, &deviceQueueFamilies);
 	CCuint32 queueFamilyIndices[] = { deviceQueueFamilies.graphicsFamily.value(), deviceQueueFamilies.presentFamily.value() };
 
@@ -892,7 +1062,7 @@ void CC_VK_destroy_framebuffers(VkDevice* logicalDevice, std::vector<VkFramebuff
 }
 
 CALLISTO_CORE_RESULT CC_VK_create_command_pool(VkDevice* logicalDevice, VkCommandPool* commandPool, VkPhysicalDevice* physicalDevice, VkSurfaceKHR* surface, VkCommandPoolCreateFlags flags) {
-	PhysicalDeviceQueueFamilies devQueFam{};
+	p_CC_VK_PhysicalDeviceQueueFamilies devQueFam{};
 	p_CC_VK_device_family_checker(*physicalDevice, *surface, &devQueFam);
 	
 	VkCommandPoolCreateInfo commandPoolInfo{};
@@ -1290,5 +1460,7 @@ void CC_VK_wait_device_idle(VkDevice* logicalDevice) {
 void CC_VK_wait_queue_idle(VkQueue* queue) {
 	vkQueueWaitIdle(*queue);
 }
+
+//<<----- Vulkan ------>//
 
 //<<----- Public Functions ------>//

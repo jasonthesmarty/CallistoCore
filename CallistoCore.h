@@ -11,9 +11,12 @@
 #include <string>
 #include <vector>
 
+#include "FMOD/fmod.hpp"
 #include "glm/glm.hpp"
 #include "shaderc/shaderc.hpp"
 #include "stb/stb_image.h"
+#include "ft2build.h"
+#include FT_FREETYPE_H
 
 /*
 *	Note: [Twitch Studio] throws errors in validation layers. (just my experience)
@@ -26,6 +29,12 @@ typedef int CCint;
 typedef float CCfloat;
 typedef double CCdouble;
 typedef long CClong;
+
+//Added in 0.2
+typedef unsigned long CCulong;
+typedef unsigned long long CCull;
+
+// Added in 0.1
 typedef char CCchar;
 typedef const char* CCwords;
 typedef bool CCboolean;
@@ -39,11 +48,14 @@ typedef uint64_t CCuint64;
 
 // Added in 0.1
 enum CALLISTO_CORE_RESULT {
+	// Added in 0.1
 	CC_PLACEHOLDER = 65535,
+	
 	CC_GLFW_INIT_SUCCESS = 1,
 	CC_GLFW_INIT_FAILURE = 2,
 	CC_GLFW_CREATE_WINDOW_SUCCESS = 3,
 	CC_GLFW_CREATE_WINDOW_FAILURE = 4,
+	
 	CC_VK_VALIDATION_LAYERS_NOT_FOUND = 5,
 	CC_VK_INSTANCE_CREATION_SUCCESS = 6,
 	CC_VK_INSTANCE_CREATION_FAILURE = 7,
@@ -90,7 +102,7 @@ enum CALLISTO_CORE_RESULT {
 	CC_VK_QUEUE_PRESENTED_FAILED = 48,
 	CC_VK_BUFFER_CREATION_SUCCESS = 49,
 	CC_VK_BUFFER_CREATION_FAILURE = 50,
-	CC_VK_MEMORY_ALLOCATED_SUCCESS = 51, 
+	CC_VK_MEMORY_ALLOCATED_SUCCESS = 51,
 	CC_VK_MEMORY_ALLOCATED_FAILURE = 52,
 	CC_VK_DESCRIPTOR_SET_LAYOUT_CREATION_SUCCESS = 53,
 	CC_VK_DESCRIPTOR_SET_LAYOUT_CREATION_FAILURE = 54,
@@ -102,11 +114,25 @@ enum CALLISTO_CORE_RESULT {
 	CC_IMAGE_DATA_LOADED_FAILED = 60,
 	CC_VK_IMAGE_CREATION_SUCCESS = 61,
 	CC_VK_IMAGE_CREATION_FAILURE = 62,
-	CC_VK_IMAGE_SAMPLER_CREATION_SUCCESS = 63, 
+	CC_VK_IMAGE_SAMPLER_CREATION_SUCCESS = 63,
 	CC_VK_IMAGE_SAMPLER_CREATION_FAILURE = 64,
-	CC_VK_IMAGE_VIEW_CREATION_SUCCESS = 65, 
+	CC_VK_IMAGE_VIEW_CREATION_SUCCESS = 65,
 	CC_VK_IMAGE_VIEW_CREATION_FAILURE = 66,
+
+	// Added in 0.2
+	CC_FMD_SOUND_SYSTEM_CREATION_SUCCESS = 472,
+	CC_FMD_SOUND_SYSTEM_CREATION_FAILURE = 473,
+	CC_FMD_SOUND_SYSTEM_INITIALIZATION_SUCCESS = 474,
+	CC_FMD_SOUND_SYSTEM_INITIALIZATION_FAILURE = 475,
+	CC_FMD_SOUND_CREATION_SUCCESS = 476,
+	CC_FMD_SOUND_CREATION_FAILURE = 477,
+
+	CC_FT_INITIALIZED_SUCCESSFULLY = 2048,
+	CC_FT_INITIALIZED_UNSUCCESSFULLY = 2049,
+	CC_FT_FACE_CREATION_SUCCESS = 2050,
+	CT_FT_FACE_CREATION_FAILED = 2051,
 };
+// Added in 0.1
 enum CALLISTO_CORE_KEYBOARD {
 	CC_KEY_UNKNOWN = -1,
 	CC_KEY_SPACE = 32,
@@ -231,6 +257,7 @@ enum CALLISTO_CORE_KEYBOARD {
 	CC_KEY_MENU = 348,
 	CC_KEY_LAST = CC_KEY_MENU
 };
+// Added in 0.1
 enum CALLISTO_CORE_MOUSE {
 	CC_MOUSE_BUTTON_1 = 0,
 	CC_MOUSE_BUTTON_2 = 1,
@@ -240,10 +267,17 @@ enum CALLISTO_CORE_MOUSE {
 	CC_MOUSE_BUTTON_6 = 5,
 	CC_MOUSE_BUTTON_7 = 6,
 	CC_MOUSE_BUTTON_8 = 7,
-	CC_MOUSE_BUTTON_LAST = GLFW_MOUSE_BUTTON_8,
-	CC_MOUSE_BUTTON_LEFT = GLFW_MOUSE_BUTTON_1,
-	CC_MOUSE_BUTTON_RIGHT = GLFW_MOUSE_BUTTON_2,
-	CC_MOUSE_BUTTON_MIDDLE = GLFW_MOUSE_BUTTON_3
+	CC_MOUSE_BUTTON_LAST = CC_MOUSE_BUTTON_8,
+	CC_MOUSE_BUTTON_LEFT = CC_MOUSE_BUTTON_1,
+	CC_MOUSE_BUTTON_RIGHT = CC_MOUSE_BUTTON_2,
+	CC_MOUSE_BUTTON_MIDDLE = CC_MOUSE_BUTTON_3
+};
+
+// Added in 0.2
+enum CALLISTO_CORE_INFO {
+	MAJOR_VERSION = 0,
+	MINOR_VERSION = 2,
+	PATCH_VERSION = 0,
 };
 
 //<<----- Enums ------>//
@@ -277,6 +311,48 @@ CCuint32 p_CC_VK_find_mem_type_index(VkPhysicalDevice* physicalDevice, CCuint32 
 //<<----- Internal Function Declarations ------>//
 
 //<<----- Public Function Declarations ------>//
+
+//<<----- Util Functions ------>//
+
+// Added in 0.2
+void CC_get_version();
+
+#ifdef CC_USEFUL
+
+// Added in 0.2
+template <typename T>
+inline void CC_println(T type) {
+	std::cout << type << '\n';
+}
+
+// Added in 0.2
+template <typename T>
+inline void CC_print(T type) {
+	std::cout << type;
+}
+
+// Added in 0.2
+template <typename T>
+inline T CC_input() {
+	T in{};
+	std::cin >> in;
+	return in;
+}
+
+// Added in 0.2
+template <typename T>
+inline T CC_input(CCwords msg) {
+	T in{};
+	CC_print(msg);
+	std::cin >> in;
+	return in;
+}
+
+#endif
+
+//<<----- Util Functions ------>//
+
+//<<----- GLFW ------>//
 
 // Added in 0.1
 CALLISTO_CORE_RESULT CC_init_glfw();
@@ -347,6 +423,104 @@ void CC_destroy_window(GLFWwindow** window);
 // Added in 0.1
 void CC_terminate_glfw();
 
+//<<----- GLFW ------>//
+
+//<<----- FMOD ------>//
+
+// Added in 0.2
+CALLISTO_CORE_RESULT CC_FMD_create_sound_system(FMOD::System** system);
+
+// Added in 0.2
+CALLISTO_CORE_RESULT CC_FMD_init_sound_system(FMOD::System* system, CCint maxChannels, FMOD_INITFLAGS flags);
+
+// Added in 0.2
+CALLISTO_CORE_RESULT CC_FMD_create_sound(FMOD::System* system, FMOD::Sound** sound, CCwords soundFile, FMOD_MODE mode);
+
+// Added in 0.2
+void CC_FMD_set_position(FMOD::Channel* channel, const FMOD_VECTOR* position, const FMOD_VECTOR* listenerOrientation);
+
+// Added in 0.2
+void CC_FMD_get_position(FMOD::Channel* channel, FMOD_VECTOR* position, FMOD_VECTOR* listenerOrientation);
+
+// Added in 0.2
+void CC_FMD_set_pan(FMOD::Channel* channel, CCfloat pan);
+
+// Added in 0.2
+void CC_FMD_set_pitch(FMOD::Channel* channel, CCfloat pitch);
+
+// Added in 0.2
+void CC_FMD_get_pitch(FMOD::Channel* channel, CCfloat* pitch);
+
+// Added in 0.2
+void CC_FMD_set_volume(FMOD::Channel* channel, CCfloat volume);
+
+// Added in 0.2
+void CC_FMD_get_volume(FMOD::Channel* channel, CCfloat* volume);
+
+// Added in 0.2
+void CC_FMD_set_priority(FMOD::Channel* channel, CCint priority);
+
+// Added in 0.2
+void CC_FMD_get_prioirty(FMOD::Channel* channel, CCint* priority);
+
+// Added in 0.2
+void CC_FMD_set_paused(FMOD::Channel* channel, CCboolean paused);
+
+// Added in 0.2
+void CC_FMD_get_paused(FMOD::Channel* channel, CCboolean* paused);
+
+// Added in 0.2
+void CC_FMD_set_mute(FMOD::Channel* channel, CCboolean mute);
+
+// Added in 0.2
+void CC_FMD_get_mute(FMOD::Channel* channel, CCboolean* mute);
+
+// Added in 0.2
+void CC_FMD_set_mode(FMOD::Channel* channel, FMOD_MODE mode);
+
+// Added in 0.2
+void CC_FMD_get_mode(FMOD::Channel* channel, FMOD_MODE* mode);
+
+// Added in 0.2
+void CC_FMD_set_timestamp(FMOD::Channel* channel, CCuint32 time, FMOD_TIMEUNIT timeMeasurement);
+
+// Added in 0.2
+void CC_FMD_get_timestamp(FMOD::Channel* channel, CCuint32* time, FMOD_TIMEUNIT timeMeasurement);
+
+// Added in 0.2
+void CC_FMD_play_sound(FMOD::System* system, FMOD::Sound* sound, FMOD::ChannelGroup* channelGroup, FMOD::Channel** channel, CCboolean paused);
+
+// Added in 0.2
+void CC_FMD_destroy_sound(FMOD::Sound* sound);
+
+// Added in 0.2
+void CC_FMD_destroy_sound_system(FMOD::System* system);
+
+//<<----- FMOD ------>//
+
+//<<----- FreeType ----->//
+
+// Added in 0.2
+CALLISTO_CORE_RESULT CC_FT_init(FT_Library* ft);
+
+// Added in 0.2
+CALLISTO_CORE_RESULT CC_FT_create_face(FT_Library* ft, FT_Face* face, CCwords fontFile);
+
+// Added in 0.2
+void CC_FT_set_pixel_size(FT_Face* face, CCuint32 fontWidthPX, CCuint32 fontHeightPX);
+
+// Added in 0.2
+void CC_FT_load_char(FT_Face* face, CCulong charCode, CCint flags);
+
+// Added in 0.2
+void CC_FT_destroy_face(FT_Face* face);
+
+// Added in 0.2
+void CC_FT_un_init(FT_Library* ft);
+
+//<<----- FreeType ----->//
+
+//<<----- Vulkan ------>//
 
 // Added in 0.1
 void CC_VK_create_app_info(VkApplicationInfo* appInfo, CCwords appName, CCwords engineName, std::array<CCint, 3> appVersion, std::array<CCint, 3> engineVersion, CCuint32 vulkanApiVersion);
@@ -679,5 +853,7 @@ void CC_VK_wait_device_idle(VkDevice *logicalDevice);
 
 // Added in 0.1
 void CC_VK_wait_queue_idle(VkQueue* queue);
+
+//<<----- Vulkan ------>//
 
 //<<----- Public Function Declarations ------>//
